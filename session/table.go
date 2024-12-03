@@ -16,6 +16,11 @@ func (s *Session) Model(value interface{}) *Session {
 	return s
 }
 
+func (s *Session) Table(name string) *Session {
+	s.RefTable().Name = name
+	return s
+}
+
 func (s *Session) RefTable() *schema.Schema {
 	if s.refTable == nil {
 		log.Error("Model is not set")
@@ -27,7 +32,7 @@ func (s *Session) CreateTable() error {
 	table := s.RefTable()
 	var columns []string
 	for _, field := range table.Fields {
-		columns = append(columns, fmt.Sprintf("%s %s %s", field.Name, field.Type, field.Tag))
+		columns = append(columns, fmt.Sprintf("%s %s %s", field.Name, field.Type, field.Constraint))
 	}
 	desc := strings.Join(columns, ",")
 	_, err := s.Raw(fmt.Sprintf("CREATE TABLE %s (%s);", table.Name, desc)).Exec()

@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	Name string `orm:"PRIMARY KEY"`
+	Name string `orm:"name:user_name;constraint:PRIMARY KEY"`
 	Age  int
 }
 
@@ -19,7 +19,7 @@ func TestParse(t *testing.T) {
 	if schema.Name != "User" || len(schema.Fields) != 2 {
 		t.Fatal("failed to parse User struct")
 	}
-	if schema.GetField("Name").Tag != "PRIMARY KEY" {
+	if schema.GetField("Name").Constraint != "PRIMARY KEY" {
 		t.Fatal("failed to parse primary key")
 	}
 }

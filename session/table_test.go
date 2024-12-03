@@ -9,7 +9,7 @@ import (
 )
 
 type User struct {
-	Name string `orm:"PRIMARY KEY"`
+	Name string `orm:"name:user_name;constraint:PRIMARY KEY"`
 	Age  int
 }
 
@@ -20,7 +20,7 @@ func TestSession_CreateTable(t *testing.T) {
 		return
 	}
 	d, _ := dialect.GetDialect("sqlite3")
-	s := New(db, d).Model(&User{})
+	s := New(db, d).Model(&User{}).Table("sys_user")
 	_ = s.DropTable()
 	_ = s.CreateTable()
 	if !s.HasTable() {

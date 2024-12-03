@@ -4,13 +4,14 @@ import (
 	"github.com/go-needle/orm/dialect"
 	"go/ast"
 	"reflect"
+	"strings"
 )
 
 // Field represents a column of database
 type Field struct {
-	Name string
-	Type string
-	Tag  string
+	Name       string
+	Type       string
+	Constraint string
 }
 
 // Schema represents a table of database
@@ -42,7 +43,20 @@ func Parse(dest any, d dialect.Dialect) *Schema {
 				Type: d.DataTypeOf(reflect.Indirect(reflect.New(p.Type))),
 			}
 			if v, ok := p.Tag.Lookup("orm"); ok {
-				field.Tag = v
+				tags := strings.Split(v, ";")
+				for _, tag := range tags {
+					temp := strings.Split(tag, ":")
+					if len(temp) != 2 {
+						continue
+					}
+					key, value := strings.TrimSpace(temp[0]), strings.TrimSpace(temp[1])
+					switch key {
+					case "name":
+						field.Name = value
+					case "constraint":
+						field.Constraint = value
+					}
+				}
 			}
 			schema.Fields = append(schema.Fields, field)
 			schema.FieldNames = append(schema.FieldNames, p.Name)
