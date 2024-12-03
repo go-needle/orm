@@ -3,17 +3,24 @@ package session
 import (
 	"database/sql"
 	"github.com/go-needle/log"
+	"github.com/go-needle/orm/dialect"
+	"github.com/go-needle/orm/schema"
 	"strings"
 )
 
 type Session struct {
-	db      *sql.DB
-	sql     strings.Builder
-	sqlVars []any
+	db       *sql.DB
+	sql      strings.Builder
+	dialect  dialect.Dialect
+	refTable *schema.Schema
+	sqlVars  []any
 }
 
-func New(db *sql.DB) *Session {
-	return &Session{db: db}
+func New(db *sql.DB, dialect dialect.Dialect) *Session {
+	return &Session{
+		db:      db,
+		dialect: dialect,
+	}
 }
 
 func (s *Session) Clear() {
