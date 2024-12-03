@@ -14,13 +14,13 @@ type User struct {
 }
 
 func TestSession_CreateTable(t *testing.T) {
-	db, err := sql.Open("sqlite3", "gee.db")
+	db, err := sql.Open("sqlite3", "g.db")
 	if err != nil {
 		log.Error(err)
 		return
 	}
 	d, _ := dialect.GetDialect("sqlite3")
-	s := New(db, d).Model(&User{}).Table("sys_user")
+	s := New(db, d, log.New()).Model(&User{}).Table("sys_user")
 	_ = s.DropTable()
 	_ = s.CreateTable()
 	if !s.HasTable() {

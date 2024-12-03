@@ -10,16 +10,18 @@ import (
 
 type Session struct {
 	db       *sql.DB
+	Log      *log.Logger
 	sql      strings.Builder
 	dialect  dialect.Dialect
 	refTable *schema.Schema
 	sqlVars  []any
 }
 
-func New(db *sql.DB, dialect dialect.Dialect) *Session {
+func New(db *sql.DB, dialect dialect.Dialect, logger *log.Logger) *Session {
 	return &Session{
 		db:      db,
 		dialect: dialect,
+		Log:     logger,
 	}
 }
 
@@ -42,9 +44,9 @@ func (s *Session) Raw(sql string, values ...interface{}) *Session {
 // Exec raw sql with sqlVars
 func (s *Session) Exec() (result sql.Result, err error) {
 	defer s.Clear()
-	debugSql(s.sql.String(), s.sqlVars...)
+	s.debugSql(s.sql.String(), s.sqlVars...)
 	if result, err = s.DB().Exec(s.sql.String(), s.sqlVars...); err != nil {
-		log.Error(err)
+		s.Log.Error(err)
 	}
 	return
 }
@@ -52,24 +54,24 @@ func (s *Session) Exec() (result sql.Result, err error) {
 // QueryRow gets a record from db
 func (s *Session) QueryRow() *sql.Row {
 	defer s.Clear()
-	debugSql(s.sql.String(), s.sqlVars...)
+	s.debugSql(s.sql.String(), s.sqlVars...)
 	return s.DB().QueryRow(s.sql.String(), s.sqlVars...)
 }
 
 // QueryRows gets a list of records from db
 func (s *Session) QueryRows() (rows *sql.Rows, err error) {
 	defer s.Clear()
-	debugSql(s.sql.String(), s.sqlVars...)
+	s.debugSql(s.sql.String(), s.sqlVars...)
 	if rows, err = s.DB().Query(s.sql.String(), s.sqlVars...); err != nil {
-		log.Error(err)
+		s.Log.Error(err)
 	}
 	return
 }
 
-func debugSql(query string, args ...any) {
+func (s *Session) debugSql(query string, args ...any) {
 	if len(args) == 0 {
-		log.Debug(query)
+		s.Log.Debug(query)
 	} else {
-		log.Debugf(strings.Replace(query, "?", "%v", len(args)), args...)
+		s.Log.Debugf(strings.Replace(query, "?", "%v", len(args)), args...)
 	}
 }

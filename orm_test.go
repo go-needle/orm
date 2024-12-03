@@ -7,7 +7,7 @@ import (
 )
 
 func TestOrm(t *testing.T) {
-	engine, _ := NewEngine("sqlite3", "gee.db")
+	engine, _ := NewEngine("sqlite3", "g.db")
 	defer engine.Close()
 	s := engine.NewSession()
 	_, _ = s.Raw("DROP TABLE IF EXISTS User;").Exec()

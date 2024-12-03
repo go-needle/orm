@@ -10,37 +10,39 @@ import (
 type Engine struct {
 	db      *sql.DB
 	dialect dialect.Dialect
+	Log     *log.Logger
 }
 
 func NewEngine(driver, source string) (e *Engine, err error) {
 	db, err := sql.Open(driver, source)
+	logger := log.New()
 	if err != nil {
-		log.Error(err)
+		logger.Error(err)
 		return
 	}
 	// Send a ping to make sure the database connection is alive.
 	if err = db.Ping(); err != nil {
-		log.Error(err)
+		logger.Error(err)
 		return
 	}
 	// make sure the specific dialect exists
 	dial, ok := dialect.GetDialect(driver)
 	if !ok {
-		log.Errorf("dialect %s Not Found", driver)
+		logger.Errorf("dialect %s Not Found", driver)
 		return
 	}
-	e = &Engine{db: db, dialect: dial}
-	log.Info("Connect database success")
+	e = &Engine{db: db, dialect: dial, Log: logger}
+	logger.Info("Connect database success")
 	return
 }
 
 func (engine *Engine) Close() {
 	if err := engine.db.Close(); err != nil {
-		log.Error("Failed to close database")
+		engine.Log.Error("Failed to close database")
 	}
-	log.Info("Close database success")
+	engine.Log.Info("Close database success")
 }
 
 func (engine *Engine) NewSession() *session.Session {
-	return session.New(engine.db, engine.dialect)
+	return session.New(engine.db, engine.dialect, engine.Log)
 }

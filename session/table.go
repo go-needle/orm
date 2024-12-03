@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"github.com/go-needle/log"
 	"github.com/go-needle/orm/schema"
 	"reflect"
 	"strings"
@@ -23,7 +22,7 @@ func (s *Session) Table(name string) *Session {
 
 func (s *Session) RefTable() *schema.Schema {
 	if s.refTable == nil {
-		log.Error("Model is not set")
+		s.Log.Error("Model is not set")
 	}
 	return s.refTable
 }
