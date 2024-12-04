@@ -3,6 +3,7 @@ package session
 import (
 	"database/sql"
 	"github.com/go-needle/log"
+	"github.com/go-needle/orm/clause"
 	"github.com/go-needle/orm/dialect"
 	"github.com/go-needle/orm/schema"
 	"strings"
@@ -13,6 +14,7 @@ type Session struct {
 	Log      *log.Logger
 	sql      strings.Builder
 	dialect  dialect.Dialect
+	clause   clause.Clause
 	refTable *schema.Schema
 	sqlVars  []any
 }
@@ -34,7 +36,7 @@ func (s *Session) DB() *sql.DB {
 	return s.db
 }
 
-func (s *Session) Raw(sql string, values ...interface{}) *Session {
+func (s *Session) Raw(sql string, values ...any) *Session {
 	s.sql.WriteString(sql)
 	s.sql.WriteString(" ")
 	s.sqlVars = append(s.sqlVars, values...)
