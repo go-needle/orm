@@ -31,7 +31,7 @@ func (s *Session) CreateTable() error {
 	table := s.RefTable()
 	var columns []string
 	for _, field := range table.Fields {
-		columns = append(columns, fmt.Sprintf("%s %s %s", field.Name, field.Type, field.Constraint))
+		columns = append(columns, fmt.Sprintf("%s %s %s", field.MappingName, field.Type, field.Constraint))
 	}
 	desc := strings.Join(columns, ",")
 	_, err := s.Raw(fmt.Sprintf("CREATE TABLE %s (%s);", table.Name, desc)).Exec()

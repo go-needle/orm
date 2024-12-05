@@ -9,18 +9,19 @@ import (
 
 // Field represents a column of database
 type Field struct {
-	Name       string
-	Type       string
-	Constraint string
+	Name        string
+	MappingName string
+	Type        string
+	Constraint  string
 }
 
 // Schema represents a table of database
 type Schema struct {
-	Model      any
-	Name       string
-	Fields     []*Field
-	FieldNames []string
-	fieldMap   map[string]*Field
+	Model             any
+	Name              string
+	Fields            []*Field
+	MappingFieldNames []string
+	fieldMap          map[string]*Field
 }
 
 func (schema *Schema) GetField(name string) *Field {
@@ -39,8 +40,9 @@ func Parse(dest any, d dialect.Dialect) *Schema {
 		p := modelType.Field(i)
 		if !p.Anonymous && ast.IsExported(p.Name) {
 			field := &Field{
-				Name: p.Name,
-				Type: d.DataTypeOf(reflect.Indirect(reflect.New(p.Type))),
+				Name:        p.Name,
+				MappingName: p.Name,
+				Type:        d.DataTypeOf(reflect.Indirect(reflect.New(p.Type))),
 			}
 			if v, ok := p.Tag.Lookup("orm"); ok {
 				tags := strings.Split(v, ";")
@@ -52,23 +54,23 @@ func Parse(dest any, d dialect.Dialect) *Schema {
 					key, value := strings.TrimSpace(temp[0]), strings.TrimSpace(temp[1])
 					switch key {
 					case "name":
-						field.Name = value
+						field.MappingName = value
 					case "constraint":
 						field.Constraint = value
 					}
 				}
 			}
 			schema.Fields = append(schema.Fields, field)
-			schema.FieldNames = append(schema.FieldNames, p.Name)
+			schema.MappingFieldNames = append(schema.MappingFieldNames, field.MappingName)
 			schema.fieldMap[p.Name] = field
 		}
 	}
 	return schema
 }
 
-func (schema *Schema) RecordValues(dest interface{}) []interface{} {
+func (schema *Schema) RecordValues(dest any) []any {
 	destValue := reflect.Indirect(reflect.ValueOf(dest))
-	var fieldValues []interface{}
+	var fieldValues []any
 	for _, field := range schema.Fields {
 		fieldValues = append(fieldValues, destValue.FieldByName(field.Name).Interface())
 	}

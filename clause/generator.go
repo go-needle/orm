@@ -58,7 +58,7 @@ func _values(values ...any) (string, []any) {
 func _select(values ...any) (string, []any) {
 	// SELECT $fields FROM $tableName
 	tableName := values[0]
-	fields := strings.Join(values[1].([]string), ",")
+	fields := strings.Join(values[1].([]string), ", ")
 	return fmt.Sprintf("SELECT %v FROM %s", fields, tableName), []any{}
 }
 
