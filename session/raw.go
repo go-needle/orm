@@ -2,28 +2,27 @@ package session
 
 import (
 	"database/sql"
-	"github.com/go-needle/log"
 	"github.com/go-needle/orm/clause"
 	"github.com/go-needle/orm/dialect"
+	"github.com/go-needle/orm/log"
 	"github.com/go-needle/orm/schema"
 	"strings"
 )
 
 type Session struct {
 	db       *sql.DB
-	Log      *log.Logger
 	sql      strings.Builder
 	dialect  dialect.Dialect
 	clause   clause.Clause
 	refTable *schema.Schema
 	sqlVars  []any
+	isDebug  bool
 }
 
-func New(db *sql.DB, dialect dialect.Dialect, logger *log.Logger) *Session {
+func New(db *sql.DB, dialect dialect.Dialect) *Session {
 	return &Session{
 		db:      db,
 		dialect: dialect,
-		Log:     logger,
 	}
 }
 
@@ -46,9 +45,11 @@ func (s *Session) Raw(sql string, values ...any) *Session {
 // Exec raw sql with sqlVars
 func (s *Session) Exec() (result sql.Result, err error) {
 	defer s.Clear()
-	s.debugSql(s.sql.String(), s.sqlVars...)
+	if s.isDebug {
+		s.debugSql(s.sql.String(), s.sqlVars...)
+	}
 	if result, err = s.DB().Exec(s.sql.String(), s.sqlVars...); err != nil {
-		s.Log.Error(err)
+		log.Error(err)
 	}
 	return
 }
@@ -56,24 +57,33 @@ func (s *Session) Exec() (result sql.Result, err error) {
 // QueryRow gets a record from db
 func (s *Session) QueryRow() *sql.Row {
 	defer s.Clear()
-	s.debugSql(s.sql.String(), s.sqlVars...)
+	if s.isDebug {
+		s.debugSql(s.sql.String(), s.sqlVars...)
+	}
 	return s.DB().QueryRow(s.sql.String(), s.sqlVars...)
 }
 
 // QueryRows gets a list of records from db
 func (s *Session) QueryRows() (rows *sql.Rows, err error) {
 	defer s.Clear()
-	s.debugSql(s.sql.String(), s.sqlVars...)
+	if s.isDebug {
+		s.debugSql(s.sql.String(), s.sqlVars...)
+	}
 	if rows, err = s.DB().Query(s.sql.String(), s.sqlVars...); err != nil {
-		s.Log.Error(err)
+		log.Error(err)
 	}
 	return
 }
 
+func (s *Session) Debug() *Session {
+	s.isDebug = true
+	return s
+}
+
 func (s *Session) debugSql(query string, args ...any) {
 	if len(args) == 0 {
-		s.Log.Debug(query)
+		log.Debug(query)
 	} else {
-		s.Log.Debugf(strings.Replace(query, "?", "%v", len(args)), args...)
+		log.Debugf(strings.Replace(query, "?", "%v", len(args)), args...)
 	}
 }

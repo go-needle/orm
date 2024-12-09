@@ -22,7 +22,7 @@ func testRecordInit(t *testing.T) *Session {
 		return nil
 	}
 	d, _ := dialect.GetDialect("sqlite3")
-	s := New(db, d, log.New()).Model(&User{})
+	s := New(db, d).Model(&User{})
 	err1 := s.DropTable()
 	err2 := s.CreateTable()
 	_, err3 := s.Insert(user1, user2)
