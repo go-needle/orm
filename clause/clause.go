@@ -5,8 +5,8 @@ import (
 )
 
 type Clause struct {
-	sql     [6]string
-	sqlVars [6][]any
+	sql     [9]string
+	sqlVars [9][]any
 }
 
 type Type int
@@ -18,6 +18,9 @@ const (
 	LIMIT
 	WHERE
 	ORDERBY
+	UPDATE
+	DELETE
+	COUNT
 )
 
 func (c *Clause) Set(name Type, vars ...any) {
@@ -30,10 +33,15 @@ func (c *Clause) Build(orders ...Type) (string, []any) {
 	var sqls []string
 	var vars []any
 	for _, order := range orders {
-		if order < 6 && c.sql[order] != "" {
+		if order < 9 && c.sql[order] != "" {
 			sqls = append(sqls, c.sql[order])
 			vars = append(vars, c.sqlVars[order]...)
 		}
 	}
 	return strings.Join(sqls, " "), vars
+}
+
+func (c *Clause) Clear() {
+	c.sql = [9]string{}
+	c.sqlVars = [9][]any{}
 }

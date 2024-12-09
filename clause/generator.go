@@ -17,6 +17,9 @@ func init() {
 	generators[LIMIT] = _limit
 	generators[WHERE] = _where
 	generators[ORDERBY] = _orderBy
+	generators[UPDATE] = _update
+	generators[DELETE] = _delete
+	generators[COUNT] = _count
 }
 
 func genBindVars(num int) string {
@@ -29,7 +32,7 @@ func genBindVars(num int) string {
 
 func _insert(values ...any) (string, []any) {
 	// INSERT INTO $tableName ($fields)
-	tableName := values[0]
+	tableName := values[0].(string)
 	fields := strings.Join(values[1].([]string), ",")
 	return fmt.Sprintf("INSERT INTO %s (%v)", tableName, fields), []any{}
 }
@@ -57,7 +60,7 @@ func _values(values ...any) (string, []any) {
 
 func _select(values ...any) (string, []any) {
 	// SELECT $fields FROM $tableName
-	tableName := values[0]
+	tableName := values[0].(string)
 	fields := strings.Join(values[1].([]string), ", ")
 	return fmt.Sprintf("SELECT %v FROM %s", fields, tableName), []any{}
 }
@@ -75,4 +78,24 @@ func _where(values ...any) (string, []any) {
 
 func _orderBy(values ...any) (string, []any) {
 	return fmt.Sprintf("ORDER BY %s", values[0]), []any{}
+}
+
+func _update(values ...any) (string, []any) {
+	tableName := values[0].(string)
+	m := values[1].(map[string]any)
+	var keys []string
+	var vars []any
+	for k, v := range m {
+		keys = append(keys, k+" = ?")
+		vars = append(vars, v)
+	}
+	return fmt.Sprintf("UPDATE %s SET %s", tableName, strings.Join(keys, ", ")), vars
+}
+
+func _delete(values ...any) (string, []any) {
+	return fmt.Sprintf("DELETE FROM %s", values[0].(string)), []any{}
+}
+
+func _count(values ...any) (string, []any) {
+	return _select(values[0], []string{"count(*)"})
 }
