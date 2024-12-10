@@ -18,7 +18,7 @@ func OpenDB(t *testing.T) *Engine {
 }
 
 type User struct {
-	Name string `orm:"name:user_name;constraint:PRIMARY KEY"`
+	Name string `orm:"constraint:PRIMARY KEY"`
 	Age  int
 }
 
@@ -40,7 +40,7 @@ func transactionRollback(t *testing.T) {
 		_ = s.Model(&User{}).CreateTable()
 		_, err = s.Insert(&User{"Tom", 18})
 		return nil, errors.New("Error")
-	})
+	}, true)
 	if err == nil || s.HasTable() {
 		t.Fatal("failed to rollback")
 	}
@@ -55,7 +55,7 @@ func transactionCommit(t *testing.T) {
 		_ = s.Model(&User{}).CreateTable()
 		_, err = s.Insert(&User{"Tom", 18})
 		return
-	})
+	}, true)
 	u := &User{}
 	_ = s.First(u)
 	if err != nil || u.Name != "Tom" {
@@ -66,15 +66,18 @@ func transactionCommit(t *testing.T) {
 func TestEngine_Migrate(t *testing.T) {
 	engine := OpenDB(t)
 	defer engine.Close()
-	s := engine.NewSession()
+	s := engine.NewSession().Debug()
 	_, _ = s.Raw("DROP TABLE IF EXISTS User;").Exec()
 	_, _ = s.Raw("CREATE TABLE User(Name text PRIMARY KEY, XXX integer);").Exec()
-	_, _ = s.Raw("INSERT INTO User(`Name`) values (?), (?)", "Tom", "Sam").Exec()
-	engine.Migrate(&User{})
+	_, _ = s.Raw("INSERT INTO User(`Name`) values (?), (?);", "Tom", "Sam").Exec()
+	err := engine.Migrate(&User{}, true)
+	if err != nil {
+		return
+	}
 
-	rows, _ := s.Raw("SELECT * FROM User").QueryRows()
+	rows, _ := s.Raw("SELECT * FROM User WHERE User.Name=?", "Tom").QueryRows()
 	columns, _ := rows.Columns()
-	if !reflect.DeepEqual(columns, []string{"user_name", "Age"}) {
+	if !reflect.DeepEqual(columns, []string{"Name", "Age"}) {
 		t.Fatal("Failed to migrate table User, got columns", columns)
 	}
 }

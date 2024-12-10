@@ -63,6 +63,7 @@ func Parse(dest any, d dialect.Dialect) *Schema {
 			schema.Fields = append(schema.Fields, field)
 			schema.MappingFieldNames = append(schema.MappingFieldNames, field.MappingName)
 			schema.fieldMap[p.Name] = field
+			schema.fieldMap[field.MappingName] = field
 		}
 	}
 	return schema

@@ -49,8 +49,11 @@ func (engine *Engine) NewSession() *session.Session {
 
 type TxFunc func(*session.Session) (any, error)
 
-func (engine *Engine) Transaction(f TxFunc) (result any, err error) {
+func (engine *Engine) Transaction(f TxFunc, isDebug bool) (result any, err error) {
 	s := engine.NewSession()
+	if isDebug {
+		s = s.Debug()
+	}
 	if err := s.Begin(); err != nil {
 		return nil, err
 	}
@@ -83,7 +86,7 @@ func difference(a []string, b []string) (diff []string) {
 }
 
 // Migrate table
-func (engine *Engine) Migrate(value any) error {
+func (engine *Engine) Migrate(value any, isDebug bool) error {
 	_, err := engine.Transaction(func(s *session.Session) (result any, err error) {
 		if !s.Model(value).HasTable() {
 			log.Infof("table %s doesn't exist", s.RefTable().Name)
@@ -95,10 +98,9 @@ func (engine *Engine) Migrate(value any) error {
 		addCols := difference(table.MappingFieldNames, columns)
 		delCols := difference(columns, table.MappingFieldNames)
 		log.Infof("added cols %v, deleted cols %v", addCols, delCols)
-
 		for _, col := range addCols {
 			f := table.GetField(col)
-			sqlStr := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", table.Name, f.MappingName, f.Type)
+			sqlStr := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s;", table.Name, f.MappingName, f.Type)
 			if _, err = s.Raw(sqlStr).Exec(); err != nil {
 				return
 			}
@@ -109,11 +111,11 @@ func (engine *Engine) Migrate(value any) error {
 		}
 		tmp := "tmp_" + table.Name
 		fieldStr := strings.Join(table.MappingFieldNames, ", ")
-		s.Raw(fmt.Sprintf("CREATE TABLE %s AS SELECT %s from %s;", tmp, fieldStr, table.Name))
+		s.Raw(fmt.Sprintf("CREATE TABLE %s AS SELECT %s FROM %s;", tmp, fieldStr, table.Name))
 		s.Raw(fmt.Sprintf("DROP TABLE %s;", table.Name))
 		s.Raw(fmt.Sprintf("ALTER TABLE %s RENAME TO %s;", tmp, table.Name))
 		_, err = s.Exec()
 		return
-	})
+	}, isDebug)
 	return err
 }
